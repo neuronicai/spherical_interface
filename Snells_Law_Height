@@ -1,0 +1,41 @@
+Clear["Global`*"] 
+n1=1;
+n2=1.5;
+R = 5;
+ObjectDist = 20;
+p[x1_] := n2*((n2-n1)/R-n1/x1)^(-1);
+Interface = Circle[{R, 0}, R];
+CircularCenter = Point[{R,0}];
+pt1 ={-ObjectDist,0};
+pt2 ={p[ObjectDist],0};
+(*ObjectCoordinate should be negative distance from origin*)
+
+rayTrace[height_]:= Module[{ObjectRay,boundarySoln,boundaryPt,Radius,NormalAngle,
+ObjectAngle,IncidentAngle, RefractAngle,ImageAngle,ImageRay,ImageSoln,ImagePt},
+ObjectRay = HalfLine[pt1, {ObjectDist,height}];
+boundarySoln = Solve[{x, y} \[Element] Interface && {x, y} \[Element] ObjectRay, {x, y}];
+boundaryPt = {x,y}/.boundarySoln[[1]];
+Radius = HalfLine[{{R,0},boundaryPt}];
+NormalAngle = ArcTan[y/(R-x)]/.boundarySoln[[1]];
+ObjectAngle = ArcTan[height/ObjectDist];
+IncidentAngle = NormalAngle + ObjectAngle;
+RefractAngle = ArcSin[n1*Sin[IncidentAngle]/n2];
+(*Finding the ray parameters after refraction*)
+ImageAngle = Abs[NormalAngle - RefractAngle];
+ImageRay = HalfLine[{
+boundaryPt, {(y/Tan[ImageAngle])+x, 0}/.boundarySoln[[1]]
+}];
+ImageSoln = Solve[{x, y} \[Element] ImageRay && y==0, {x, y}];
+ImagePt = {x,y}/.ImageSoln[[1]];
+(*Now to draw the graph and output the ray tracing*)
+Graphics[{
+White, Disk[{R, 0}, R], 
+White, Rectangle[{R,-R},{50,R}],
+PointSize[Large],
+Red, CircularCenter, Radius, Point[{0,0}], Point[boundaryPt],
+Green, Point[pt2],
+Blue, Point[pt1],Thickness[Large], Line[{pt1,boundaryPt}], Point[{ImagePt}], Line[{boundaryPt,ImagePt}]
+}, Background -> Black, Axes->True , ImageSize->1200]
+]
+
+m=Manipulate[rayTrace[h],{h,0.001, 4.05}]
